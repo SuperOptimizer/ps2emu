@@ -73,7 +73,7 @@ typedef enum mips_instr_e {
   //sync
   SYNC,
   //misc
-  MOVN, MOVZ, PREF, CACHE, LWC1, SWC1, LQC2, SQC2,
+  MOVN, MOVZ, PREF,
   //ee mult div
   MADD, MADDU, MULT1, MULTU1, DIV1, DIVU1, MADD1, MADDU1, MFHI1, MTHI1, MFLO1, MTLO1,
   // MMI alu
@@ -90,6 +90,22 @@ typedef enum mips_instr_e {
   LQ, SQ,
   // MMI data rearrangement
   PPACB, PPACH, PINTEH, PPACW, PEXTUB, PEXTLB, PEXTUH, PEXTLH, PEXTUW, PEXTLW, PEXT5, PPAC5, PCPYH, PCPYLD, PCPYUD, PREVH, PINTH, PEXEH, PEXCH, PEXEW, PEXCW, PROT3W,
+  // cop0
+  BC0F, BC0FL, BC0T, BC0TL, CACHE, DI, EI, ERET, MFC0, MTC0, TLBR, TLBWI, TLBWR, TLBP,
+  // fpu move
+  LWC1, SWC1, MTC1, MFC1, MOV_S, CTC1, CFC1,
+  // fpu cvt
+  CVT_S_W, CVT_W_S,
+  // fpu compute
+  ADD_S, SUB_S, MUL_S, DIV_S, ABS_S, NEG_S, SQRT_S, ADDA_S, SUBA_S, MULA_S, MADD_S, MADDA_S, MSUB_S, MSUBA_S, RSQRT_S, MAX_S, MIN_S,
+  // fpu compare
+  C_LS_S, //TODO: and the like
+  //fpu branch
+  BC1T, BC1F, BC1TL, BC1FL,
+  //cop2
+  BC2F, BC2FL, BC2T, BC2TL, CALLMS, CALLMSR, CFC2, CTC2, LQC2, SQC2, QMFC2, QMTC2, WAITQ,
+
+
 
 } mips_instr_e;
 
