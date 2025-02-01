@@ -18,6 +18,31 @@ typedef float f32;
 
 #define auto register __auto_type
 #define cleanup(func) __attribute__((cleanup(func)))
+#define overload __attribute__((overloadable))
+
+
+#define __builtin_add_overflow_p(a,b,c) ({ \
+__typeof__(c) __result; \
+__builtin_add_overflow(a, b, &__result); \
+})
+
+#define __builtin_sub_overflow_p(a,b,c) ({ \
+__typeof__(c) __result; \
+__builtin_sub_overflow(a, b, &__result); \
+})
+
+#define __builtin_mul_overflow_p(a,b,c) ({ \
+__typeof__(c) __result; \
+__builtin_mul_overflow(a, b, &__result); \
+})
+
+#define add_overflows(a,b) __builtin_add_overflow_p(a, b, (__typeof__((a) + (b)))0)
+#define sub_overflows(a,b) __builtin_sub_overflow_p(a, b, (__typeof__((a) - (b)))0)
+#define mul_overflows(a,b) __builtin_mul_overflow_p(a, b, (__typeof__((a) * (b)))0)
+
+#define add_overflow(a,b,dest) __builtin_add_overflow(a, b, dest)
+#define sub_overflow(a,b,dest) __builtin_sub_overflow(a, b, dest)
+#define mul_overflow(a,b,dest) __builtin_mul_overflow(a, b, dest)
 
 typedef union gpr {
   u8 u8[16];
@@ -115,10 +140,11 @@ typedef enum inst_type_e {
 
 typedef union inst_op {
   u32 raw;
-  struct r { u8 op: 6; u8 rs: 5; u8 rt: 5; u8 rd: 5; u8 sa: 5; u8 func: 6; };
-  struct j { u8 op: 6; u32 target:26; };
-  struct i { u8 op: 6; u8 rs: 5; u8 rt: 5; union{u16 uimm; s16 simm;};};
-} inst_op;
+  struct [[gnu::packed]] { u8 op: 6; u8 rs: 5; u8 rt: 5; u8 rd: 5; u8 sa: 5; u8 func: 6; };
+  struct [[gnu::packed]] { u8 _op: 6; u32 target:26; };
+  struct [[gnu::packed]] { u8 __op: 6; u8 __rs: 5; u8 __rt: 5; union{u16 uimm; s16 simm;};};
+} inst_op [[gnu::packed]];
+
 static_assert(sizeof(inst_op) == 4);
 
 typedef struct instruction {
