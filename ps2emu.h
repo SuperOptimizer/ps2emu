@@ -139,7 +139,7 @@ typedef enum disasm_type_e {
   DISASM_NONE, DISASM_RD_RS_RT, DISASM_RT_RS_IMM, DISASM_RS_RT_OFFSET, DISASM_RS_OFFSET, DISASM_RS_RT,
   DISASM_RD_RT_SA, DISASM_RD_RT_RS, DISASM_TARGET, DISASM_RS, DISASM_RD_RS, DISASM_RT_OFFSET_BASE,
   DISASM_RT_IMM, DISASM_RD, DISASM_RS_IMM, DISASM_OFFSET, DISASM_RT_RD, DISASM_RT
-};
+} disasm_type_e;
 
 typedef union inst_op {
   u32 raw;
@@ -153,5 +153,16 @@ static_assert(sizeof(inst_op) == 4);
 typedef struct instruction {
   inst_op op;
   mips_instr_e inst;
-  char* disasm;
+  disasm_type_e disasm;
+  char* name;
 } instruction;
+
+static inline const char* mips_reg_name(int reg) {
+  static const char* names[] = {
+    "zero", "at", "v0", "v1", "a0", "a1", "a2", "a3",
+    "t0", "t1", "t2", "t3", "t4", "t5", "t6", "t7",
+    "s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7",
+    "t8", "t9", "k0", "k1", "gp", "sp", "fp", "ra"
+};
+  return (reg >= 0 && reg < 32) ? names[reg] : "invalid";
+}
