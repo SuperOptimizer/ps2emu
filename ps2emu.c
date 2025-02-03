@@ -5,7 +5,7 @@ instruction mips_decode(u32 opcode, u32 pc) {
 
   switch (decoded.op) {
     case 0: switch (decoded.func) {
-      case 0:  return (instruction){.op=decoded, .inst=SLL, .disasm="sll %s %s %s"};
+      case 0:  return (instruction){.op=decoded, .inst=SLL, .disasm="sll"};
       case 1:  return (instruction){.op=decoded, .inst=INVALID, .disasm="invalid"};
       case 2:  return (instruction){.op=decoded, .inst=SRL, .disasm="srl"};
       case 3:  return (instruction){.op=decoded, .inst=SRA, .disasm="sra"};
@@ -349,32 +349,33 @@ instruction mips_decode(u32 opcode, u32 pc) {
     case 61: return (instruction){.op=decoded, .inst=INVALID, .disasm="invalid"};
     case 62: return (instruction){.op=decoded, .inst=SQC2, .disasm="sqc2"};
     case 63: return (instruction){.op=decoded, .inst=SD, .disasm="SD"};
+    default: return (instruction){.op=decoded, .inst=INVALID, .disasm="invalid"};
   }
 }
 
-overload bool mips_read8(ps2* ps2, mips* mips, u32 address, u8* dest) {}
-overload bool mips_read16(ps2* ps2, mips* mips, u32 address, u16* dest) {}
-overload bool mips_read32(ps2* ps2, mips* mips, u32 address, u32* dest) {}
-overload bool mips_read64(ps2* ps2, mips* mips, u32 address, u64* dest) {}
-overload bool mips_read128(ps2* ps2, mips* mips, u32 address, u128* dest) {}
+overload bool mips_read(ps2* ps2, mips* mips, u32 address, u8* dest) {}
+overload bool mips_read(ps2* ps2, mips* mips, u32 address, u16* dest) {}
+overload bool mips_read(ps2* ps2, mips* mips, u32 address, u32* dest) {}
+overload bool mips_read(ps2* ps2, mips* mips, u32 address, u64* dest) {}
+overload bool mips_read(ps2* ps2, mips* mips, u32 address, u128* dest) {}
 
-overload bool mips_read8(ps2* ps2, mips* mips, u32 address, s8* dest) {}
-overload bool mips_read16(ps2* ps2, mips* mips, u32 address, s16* dest) {}
-overload bool mips_read32(ps2* ps2, mips* mips, u32 address, s32* dest) {}
-overload bool mips_read64(ps2* ps2, mips* mips, u32 address, s64* dest) {}
-overload bool mips_read128(ps2* ps2, mips* mips, u32 address, s128* dest) {}
+overload bool mips_read(ps2* ps2, mips* mips, u32 address, s8* dest) {}
+overload bool mips_read(ps2* ps2, mips* mips, u32 address, s16* dest) {}
+overload bool mips_read(ps2* ps2, mips* mips, u32 address, s32* dest) {}
+overload bool mips_read(ps2* ps2, mips* mips, u32 address, s64* dest) {}
+overload bool mips_read(ps2* ps2, mips* mips, u32 address, s128* dest) {}
 
-overload bool mips_write8(ps2* ps2, mips* mips, u32 address, u8 data) {}
-overload bool mips_write16(ps2* ps2, mips* mips, u32 address, u16 data) {}
-overload bool mips_write32(ps2* ps2, mips* mips, u32 address, u32 data) {}
-overload bool mips_write64(ps2* ps2, mips* mips, u32 address, u64 data) {}
-overload bool mips_write128(ps2* ps2, mips* mips, u32 address, u128 data) {}
+overload bool mips_write(ps2* ps2, mips* mips, u32 address, u8 data) {}
+overload bool mips_write(ps2* ps2, mips* mips, u32 address, u16 data) {}
+overload bool mips_write(ps2* ps2, mips* mips, u32 address, u32 data) {}
+overload bool mips_write(ps2* ps2, mips* mips, u32 address, u64 data) {}
+overload bool mips_write(ps2* ps2, mips* mips, u32 address, u128 data) {}
 
-overload bool mips_write8(ps2* ps2, mips* mips, u32 address, s8 data) {}
-overload bool mips_write16(ps2* ps2, mips* mips, u32 address, s16 data) {}
-overload bool mips_write32(ps2* ps2, mips* mips, u32 address, s32 data) {}
-overload bool mips_write64(ps2* ps2, mips* mips, u32 address, s64 data) {}
-overload bool mips_write128(ps2* ps2, mips* mips, u32 address, s128 data) {}
+overload bool mips_write(ps2* ps2, mips* mips, u32 address, s8 data) {}
+overload bool mips_write(ps2* ps2, mips* mips, u32 address, s16 data) {}
+overload bool mips_write(ps2* ps2, mips* mips, u32 address, s32 data) {}
+overload bool mips_write(ps2* ps2, mips* mips, u32 address, s64 data) {}
+overload bool mips_write(ps2* ps2, mips* mips, u32 address, s128 data) {}
 
 void mips_execute(ps2* ps2, mips* mips, instruction instruction) {
   inst_op decoded = instruction.op;
@@ -386,130 +387,134 @@ void mips_execute(ps2* ps2, mips* mips, instruction instruction) {
 
   auto simm = decoded.simm;
   auto uimm = decoded.uimm;
-  auto base = decoded.rs;
+  u8 base = decoded.rs;
 
   u64 shift = 0, mask = 0, data = 0, merged = 0;
 
-  u8 u8 = 0;
-  u16 u16 = 0;
-  u32 u32 = 0;
-  u64 u64 = 0;
-  u128 u128 = 0;
+  u8 tempu8 = 0;
+  u16 tempu16 = 0;
+  u32 tempu32 = 0;
+  u64 tempu64 = 0;
+  u128 tempu128 = 0;
 
-  s8 s8 = 0;
-  s16 s16 = 0;
-  s32 s32 = 0;
-  s64 s64 = 0;
-  s128 s128 = 0;
+  s8 temps8 = 0;
+  s16 temps16 = 0;
+  s32 temps32 = 0;
+  s64 temps64 = 0;
+  s128 temps128 = 0;
 
   switch (instruction.inst) {
   case INVALID: break;
-  case LB:  if (mips_read8(ps2,  mips, base(u32,0) + simm, &s8))  rt(s64,0) = s8;  break;
-  case LBU: if (mips_read8(ps2,  mips, base(u32,0) + simm, &u8))  rt(u64,0) = u8;  break;
-  case LD:  if (mips_read64(ps2, mips, base(u32,0) + simm, &u64)) rt(u64,0) = u64; break;
-  case LDL: if (mips_read64(ps2, mips, base(u32,0) + simm & ~7UL, &u64)) {
-      rt(u64,0) = rt(u64,0) & (1ULL << (base(u32,0) + simm & 7) * 8) - 1 | u64 << (base(u32,0) + simm & 7) * 8;
+  case LB:  if (mips_read(ps2,  mips, base(u32,0) + simm, &temps8))  rt(s64,0) = temps8;  break;
+  case LBU: if (mips_read(ps2,  mips, base(u32,0) + simm, &tempu8))  rt(u64,0) = tempu8;  break;
+  case LD:  if (mips_read(ps2, mips, base(u32,0) + simm, &tempu64)) rt(u64,0) = tempu64; break;
+  case LDL: if (mips_read(ps2, mips, base(u32,0) + simm & ~7UL, &tempu64)) {
+      rt(u64,0) = rt(u64,0) & (1ULL << (base(u32,0) + simm & 7) * 8) - 1 | tempu64 << (base(u32,0) + simm & 7) * 8;
     }
     break;
-  case LDR: if (mips_read64(ps2, mips, base(u32,0) + simm & ~7UL, &u64)) {
-      rt(u64,0) = rt(u64,0) & ~((1ULL << (8 - base(u32,0) + simm & 7) * 8) - 1) | u64 >> (base(u32,0) + simm & 7 * 8);
+  case LDR: if (mips_read(ps2, mips, base(u32,0) + simm & ~7UL, &tempu64)) {
+      rt(u64,0) = rt(u64,0) & ~((1ULL << (8 - base(u32,0) + simm & 7) * 8) - 1) | tempu64 >> (base(u32,0) + simm & 7 * 8);
     }
     break;
-  case LH:  if (mips_read16(ps2,  mips, base(u32,0) + simm, &s16))  rt(s64,0) = s16; break;
-  case LHU: if (mips_read16(ps2,  mips, base(u32,0) + simm, &u16))  rt(u64,0) = u16;  break;
-  case LW:  if (mips_read32(ps2,  mips, base(u32,0) + simm, &s32))  rt(s64,0) = s32;  break;
-  case LWL: if (mips_read32(ps2, mips, base(u32,0) + simm & ~3UL, &u32)) {
-    rt(u64,0) = rt(u64,0) & (1ULL << (base(u32,0) + simm & 3) * 8) - 1 | (s64)(s32)(u32 << (base(u32,0) + simm & 3) * 8);
+  case LH:  if (mips_read(ps2,  mips, base(u32,0) + simm, &temps16))  rt(s64,0) = temps16; break;
+  case LHU: if (mips_read(ps2,  mips, base(u32,0) + simm, &tempu16))  rt(u64,0) = tempu16;  break;
+  case LW:  if (mips_read(ps2,  mips, base(u32,0) + simm, &temps32))  rt(s64,0) = temps32;  break;
+  case LWL: if (mips_read(ps2, mips, (u32)(base(u32,0) + simm) & ~3UL, &tempu32)) {
+    rt(u64,0) = (rt(u64,0) & ((1ULL << ((base(u32,0) + simm & 3) * 8)) - 1)) |
+                (((u64)tempu32 << ((base(u32,0) + simm & 3) * 8)) >> 32 << 32);
   }
   break;
-  case LWR: if (mips_read32(ps2, mips, base(u32,0) + simm & ~3UL, &u32)) {
-    rt(u64,0) = rt(u64,0) & ~((1ULL << (4 - base(u32,0) + simm & 3) * 8) - 1) | (s64)(s32)(u32 >> (base(u32,0) + simm & 3) * 8);
+  case LWR: if (mips_read(ps2, mips, (u32)(base(u32,0) + simm) & ~3UL, &tempu32)) {
+    rt(u64,0) = (rt(u64,0) & ~((1ULL << ((4 - base(u32,0) + simm & 3) * 8)) - 1)) |
+                (((u64)tempu32 >> ((base(u32,0) + simm & 3) * 8)) << 32 >> 32);
   }
   break;
-  case LWU: if (mips_read32(ps2, mips, base(u32,0) + simm, &u32)) rt(u64,0) = u32; break;
-  case SB: mips_write8(ps2, mips, base(u32,0) + simm, rt(u8,0));   break;
-  case SD: mips_write64(ps2, mips, base(u32,0) + simm, rt(u64,0)); break;
-  case SDL: if (mips_read64(ps2, mips, base(u32,0) + simm & ~7UL, &u64))
-        mips_write64(ps2, mips, base(u32,0) + simm & ~7UL, (u64 & ~(~0ULL << ((base(u32,0) + simm & 7) * 8))) | (rt(u64,0) >> ((base(u32,0) + simm & 7) * 8))); break;
-  case SDR: if (mips_read64(ps2, mips, base(u32,0) + simm & ~7UL, &u64))
-        mips_write64(ps2, mips, base(u32,0) + simm & ~7UL, (u64 & ~((1ULL << ((8 - (base(u32,0) + simm & 7)) * 8)) - 1)) | (rt(u64,0) << ((8 - (base(u32,0) + simm & 7)) * 8))); break;
-  case SH: break;
-  case SW: break;
-  case SWL: break;
-  case SWR: break;
-  case ADDI:
-    if (add_overflow(rs(s64,0), simm, &rt(s64,0))) {
-      // exception
-    }
-    break;
-  case ADDIU:
-    rt(u64,0) = rs(s64,0) + simm;
-    break;
-  case ANDI: break;
-  case DADDI: break;
-  case DADDIU: break;
-  case LUI: break;
-  case ORI: break;
-  case SLTI: break;
-  case SLTIU: break;
-  case XORI: break;
-  case ADD: break;
-  case ADDU: break;
-  case AND: break;
-  case DADD: break;
-  case DADDU: break;
-  case DSUB: break;
-  case DSUBU: break;
-  case NOR: break;
-  case OR: break;
-  case SLT: break;
-  case SLTU: break;
-  case SUB: break;
-  case SUBU: break;
-  case XOR: break;
-  case DSLL: break;
-  case DSLL32: break;
-  case DSLLV: break;
-  case DSRA: break;
-  case DSRA32: break;
-  case DSRAV: break;
-  case DSRL: break;
-  case DSRL32: break;
-  case DSRLV: break;
-  case SLL: break;
-  case SLLV: break;
-  case SRA: break;
-  case SRAV: break;
-  case SRL: break;
-  case SRLV: break;
-  case DIV: break;
-  case DIVU: break;
-  case MFHI: break;
-  case MFLO: break;
-  case MTHI: break;
-  case MTLO: break;
-  case MULT: break;
-  case MULTU: break;
-  case J: break;
-  case JAL: break;
-  case JALR: break;
-  case JR: break;
-  case BEQ: break;
-  case BEQL: break;
-  case BGEZ: break;
-  case BGEZAL: break;
-  case BGEZALL: break;
-  case BGEZL: break;
-  case BGTZ: break;
-  case BGTZL: break;
-  case BLEZ: break;
-  case BLEZL: break;
-  case BLTZ: break;
-  case BLTZAL: break;
-  case BLTZALL: break;
-  case BLTZL: break;
-  case BNE: break;
-  case BNEL: break;
+  case LWU: if (mips_read(ps2, mips, base(u32,0) + simm, &tempu32)) rt(u64,0) = tempu32; break;
+  case SB: mips_write(ps2, mips, base(u32,0) + simm, rt(u8,0));   break;
+  case SD: mips_write(ps2, mips, base(u32,0) + simm, rt(u64,0)); break;
+  case SDL: if (mips_read(ps2, mips, base(u32,0) + simm & ~7UL, &tempu64)) mips_write(ps2, mips, base(u32,0) + simm & ~7UL, (tempu64 & ~(~0ULL << ((base(u32,0) + simm & 7) * 8))) | (rt(u64,0) >> ((base(u32,0) + simm & 7) * 8))); break;
+  case SDR: if (mips_read(ps2, mips, base(u32,0) + simm & ~7UL, &tempu64)) mips_write(ps2, mips, base(u32,0) + simm & ~7UL, (tempu64 & ~((1ULL << ((8 - (base(u32,0) + simm & 7)) * 8)) - 1)) | (rt(u64,0) << ((8 - (base(u32,0) + simm & 7)) * 8))); break;
+  case SH: mips_write(ps2, mips, base(u32,0) + simm, rt(u16,0)); break;
+  case SW: mips_write(ps2, mips, base(u32,0) + simm, rt(u32,0)); break;
+  case SWL: if (mips_read(ps2, mips, (u32)(base(u32,0) + simm) & ~3UL, &tempu32)) {
+    mips_write(ps2, mips, (u32)(base(u32,0) + simm) & ~3UL,
+      (tempu32 & ~(~0U << ((base(u32,0) + simm & 3) * 8))) |
+      (rt(u32,0) >> ((base(u32,0) + simm & 3) * 8)));
+  }
+  break;
+  case SWR: if (mips_read(ps2, mips, (u32)(base(u32,0) + simm) & ~3UL, &tempu32)) {
+    mips_write(ps2, mips, (u32)(base(u32,0) + simm) & ~3UL,
+      (tempu32 & ~((1U << ((4 - (base(u32,0) + simm & 3)) * 8)) - 1)) |
+      (rt(u32,0) << ((4 - (base(u32,0) + simm & 3)) * 8)));
+  }
+  break;
+  case ADDI: if (add_overflow(rs(s64,0), simm, &rt(s64,0))) {/* exception */} break;
+  case ADDIU: rt(s64,0) = rs(s64,0) + simm; break;
+  case ANDI: rt(u64,0) = rs(u64,0) & uimm;  break;
+  case DADDI: if (add_overflow(rs(s64,0), simm, &rt(s64,0))) {/* exception */} break;
+  case DADDIU: rt(s64,0) = rs(s64,0) + simm; break;
+  case LUI: rt(u64,0) = (u64)uimm << 16; break;
+  case ORI: rt(u64,0) = rs(u64,0) | uimm; break;
+  case SLTI: rt(u64,0) = rs(s64,0) < simm ? 1 : 0; break;
+  case SLTIU: rt(u64,0) = (u64)rs(s64,0) < (u64)simm ? 1 : 0; break;
+  case XORI: rt(u64,0) = rs(u64,0) ^ uimm; break;
+  case ADD: if (add_overflow(rs(s64,0), rd(s64,0), &rt(s64,0))) {} break;
+  case ADDU: rt(s64,0) = rs(s64,0) + rd(s64,0); break;
+  case AND: rt(u64,0) = rs(u64,0) & rd(u64,0); break;
+  case DADD: if (add_overflow(rs(s64,0), rd(s64,0), &rt(s64,0))) {} break;
+  case DADDU: rt(s64,0) = rs(s64,0) + rd(s64,0); break;
+  case DSUB: if (sub_overflow(rs(s64,0), rd(s64,0), &rt(s64,0))) {} break;
+  case DSUBU: rt(s64,0) = rs(s64,0) - rd(s64,0); break;
+  case NOR: rt(u64,0) = ~(rs(u64,0) | rd(u64,0)); break;
+  case OR: rt(u64,0) = rs(u64,0) | rd(u64,0); break;
+  case SLT: rt(u64,0) = rs(s64,0) < rd(s64,0) ? 1 : 0; break;
+  case SLTU: rt(u64,0) = (u64)rs(s64,0) < (u64)rd(s64,0) ? 1 : 0; break;
+  case SUB: if (sub_overflow(rs(s64,0), rd(s64,0), &rt(s64,0))) {} break;
+  case SUBU: rt(s64,0) = rs(s64,0) - rd(s64,0); break;
+  case XOR: rt(u64,0) = rs(u64,0) ^ rd(u64,0); break;
+  case DSLL: rt(u64,0) = rd(u64,0) << decoded.sa; break;
+  case DSLL32: rt(u64,0) = rd(u64,0) << (decoded.sa + 32); break;
+  case DSLLV: rt(u64,0) = rd(u64,0) << (rs(u64,0) & 63); break;
+  case DSRA: rt(s64,0) = rd(s64,0) >> decoded.sa; break;
+  case DSRA32: rt(s64,0) = rd(s64,0) >> (decoded.sa + 32); break;
+  case DSRAV: rt(s64,0) = rd(s64,0) >> (rs(u64,0) & 63); break;
+  case DSRL: rt(u64,0) = rd(u64,0) >> decoded.sa; break;
+  case DSRL32: rt(u64,0) = rd(u64,0) >> (decoded.sa + 32); break;
+  case DSRLV: rt(u64,0) = rd(u64,0) >> (rs(u64,0) & 63); break;
+  case SLL: rt(u64,0) = (u64)((u32)rd(u64,0) << decoded.sa); break;
+  case SLLV: rt(u64,0) = (u64)((u32)rd(u64,0) << (rs(u64,0) & 31)); break;
+  case SRA: rt(s64,0) = (s64)((s32)rd(s64,0) >> decoded.sa); break;
+  case SRAV: rt(s64,0) = (s64)((s32)rd(s64,0) >> (rs(u64,0) & 31)); break;
+  case SRL: rt(u64,0) = (u64)((u32)rd(u64,0) >> decoded.sa); break;
+  case SRLV: rt(u64,0) = (u64)((u32)rd(u64,0) >> (rs(u64,0) & 31)); break;
+  case DIV: mips->hi.s64[0] = rs(s64,0) % rd(s64,0); mips->lo.s64[0] = rs(s64,0) / rd(s64,0); break;
+  case DIVU: mips->hi.u64[0] = (u64)rs(s64,0) % (u64)rd(s64,0); mips->lo.u64[0] = (u64)rs(s64,0) / (u64)rd(s64,0); break;
+  case MFHI: rt(u64,0) = mips->hi.u64[0]; break;
+  case MFLO: rt(u64,0) = mips->lo.u64[0]; break;
+  case MTHI: mips->hi.u64[0] = rs(u64,0); break;
+  case MTLO: mips->lo.u64[0] = rs(u64,0); break;
+  case MULT: mips->lo.s64[0] = (s64)((s32)rs(s64,0)) * (s64)((s32)rd(s64,0)); mips->hi.s64[0] = (mips->lo.s64[0] >> 63); break;
+  case MULTU: mips->lo.u64[0] = (u64)((u32)rs(u64,0)) * (u64)((u32)rd(u64,0)); mips->hi.u64[0] = (mips->lo.u64[0] >> 32); break;
+  case J: mips->nextpc = (mips->pc & 0xF0000000) | (decoded.target << 2); break;
+  case JAL: mips->ra.u64[0] = mips->pc + 8; mips->nextpc = (mips->pc & 0xF0000000) | (decoded.target << 2); break;
+  case JALR: tempu64 = rs(u64,0); mips->ra.u64[0] = mips->pc + 8; mips->nextpc = tempu64; break;
+  case JR: mips->nextpc = rs(u64,0); break;
+  case BEQ: if (rs(u64,0) == rt(u64,0)) mips->nextpc = mips->pc + (simm << 2) + 4; break;
+  case BEQL: if (rs(u64,0) == rt(u64,0)) mips->nextpc = mips->pc + (simm << 2) + 4; else mips->nextpc = mips->pc + 8; break;
+  case BGEZ: if (rs(s64,0) >= 0) mips->nextpc = mips->pc + (simm << 2) + 4; break;
+  case BGEZAL: if (rs(s64,0) >= 0) { mips->ra.u64[0] = mips->pc + 8; mips->nextpc = mips->pc + (simm << 2) + 4; } break;
+  case BGEZALL: if (rs(s64,0) >= 0) { mips->ra.u64[0] = mips->pc + 8; mips->nextpc = mips->pc + (simm << 2) + 4; } else mips->nextpc = mips->pc + 8; break;
+  case BGEZL: if (rs(s64,0) >= 0) mips->nextpc = mips->pc + (simm << 2) + 4; else mips->nextpc = mips->pc + 8; break;
+  case BGTZ: if (rs(s64,0) > 0) mips->nextpc = mips->pc + (simm << 2) + 4; break;
+  case BGTZL: if (rs(s64,0) > 0) mips->nextpc = mips->pc + (simm << 2) + 4; else mips->nextpc = mips->pc + 8; break;
+  case BLEZ: if (rs(s64,0) <= 0) mips->nextpc = mips->pc + (simm << 2) + 4; break;
+  case BLEZL: if (rs(s64,0) <= 0) mips->nextpc = mips->pc + (simm << 2) + 4; else mips->nextpc = mips->pc + 8; break;
+  case BLTZ: if (rs(s64,0) < 0) mips->nextpc = mips->pc + (simm << 2) + 4; break;
+  case BLTZAL: if (rs(s64,0) < 0) { mips->ra.u64[0] = mips->pc + 8; mips->nextpc = mips->pc + (simm << 2) + 4; } break;
+  case BLTZALL: if (rs(s64,0) < 0) { mips->ra.u64[0] = mips->pc + 8; mips->nextpc = mips->pc + (simm << 2) + 4; } else mips->nextpc = mips->pc + 8; break;
+  case BLTZL: if (rs(s64,0) < 0) mips->nextpc = mips->pc + (simm << 2) + 4; else mips->nextpc = mips->pc + 8; break;
+  case BNE: if (rs(u64,0) != rt(u64,0)) mips->nextpc = mips->pc + (simm << 2) + 4; break;
+  case BNEL: if (rs(u64,0) != rt(u64,0)) mips->nextpc = mips->pc + (simm << 2) + 4; else mips->nextpc = mips->pc + 8; break;
   case SYSCALL: break;
   case BREAK: break;
   case TGE: break;
@@ -525,114 +530,114 @@ void mips_execute(ps2* ps2, mips* mips, instruction instruction) {
   case TEQI: break;
   case TNEI: break;
   case SYNC: break;
-  case MOVN: break;
-  case MOVZ: break;
+  case MOVN: if (rt(u64,0) != 0) rd(u64,0) = rs(u64,0); break;
+  case MOVZ: if (rt(u64,0) == 0) rd(u64,0) = rs(u64,0); break;
   case PREF: break;
-  case MADD: break;
-  case MADDU: break;
-  case MULT1: break;
-  case MULTU1: break;
-  case DIV1: break;
-  case DIVU1: break;
-  case MADD1: break;
-  case MADDU1: break;
-  case MFHI1: break;
-  case MTHI1: break;
-  case MFLO1: break;
-  case MTLO1: break;
-  case PADDB: break;
-  case PSUBB: break;
-  case PADDH: break;
-  case PSUBH: break;
-  case PADDW: break;
-  case PSUBW: break;
-  case PADSBH: break;
-  case PADDSB: break;
-  case PSUBSB: break;
-  case PADDSH: break;
-  case PSUBSH: break;
-  case PADDSW: break;
-  case PSUBSW: break;
-  case PADDUB: break;
-  case PSUBUB: break;
-  case PADDUH: break;
-  case PSUBUH: break;
-  case PADDUW: break;
-  case PSUBUW: break;
-  case PMULTW: break;
-  case PMULTUW: break;
-  case PDIVW: break;
-  case PDIVUW: break;
-  case PMADDW: break;
-  case PMADDUW: break;
-  case PMSUBW: break;
-  case PMFHI: break;
-  case PMTHI: break;
-  case PMFLO: break;
-  case PMTLO: break;
-  case PMULTH: break;
-  case PMADDH: break;
-  case PMSUBH: break;
+  case MADD: { s128 result = (s128)mips->lo.s64[0] + ((s128)rs(s64,0) * rd(s64,0)); mips->lo.s64[0] = (s64)result; mips->hi.s64[0] = (s64)(result >> 64); } break;
+  case MADDU: { u128 result = (u128)mips->lo.u64[0] + ((u128)rs(u64,0) * rd(u64,0)); mips->lo.u64[0] = (u64)result; mips->hi.u64[0] = (u64)(result >> 64); } break;
+  case MULT1: mips->lo.s64[0] = (s64)((s32)rs(s64,0)) * (s64)((s32)rd(s64,0)); mips->hi.s64[0] = (mips->lo.s64[0] >> 63); break;
+  case MULTU1: mips->lo.u64[0] = (u64)((u32)rs(u64,0)) * (u64)((u32)rd(u64,0)); mips->hi.u64[0] = (mips->lo.u64[0] >> 32); break;
+  case DIV1:  mips->hi.s64[0] = rs(s64,0) % rd(s64,0); mips->lo.s64[0] = rs(s64,0) / rd(s64,0); break;
+  case DIVU1:  mips->hi.u64[0] = (u64)rs(s64,0) % (u64)rd(s64,0); mips->lo.u64[0] = (u64)rs(s64,0) / (u64)rd(s64,0); break;
+  case MADD1:  { s128 result = (s128)mips->lo.s64[0] + ((s128)rs(s64,0) * rd(s64,0)); mips->lo.s64[0] = (s64)result; mips->hi.s64[0] = (s64)(result >> 64); } break;
+  case MADDU1: { u128 result = (u128)mips->lo.u64[0] + ((u128)rs(u64,0) * rd(u64,0)); mips->lo.u64[0] = (u64)result; mips->hi.u64[0] = (u64)(result >> 64); } break;
+  case MFHI1:  rt(u64,0) = mips->hi.u64[0]; break;
+  case MTHI1: mips->hi.u64[0] = rs(u64,0); break;
+  case MFLO1:  rt(u64,0) = mips->lo.u64[0]; break;
+  case MTLO1:  mips->lo.u64[0] = rs(u64,0); break;
+  case PADDB: for (int i = 0; i < 16; i++) rd(u8,i) = rs(u8,i) + rt(u8,i); break;
+  case PSUBB: for (int i = 0; i < 16; i++) rd(u8,i) = rs(u8,i) - rt(u8,i); break;
+  case PADDH: for (int i = 0; i < 8; i++) rd(u16,i) = rs(u16,i) + rt(u16,i); break;
+  case PSUBH: for (int i = 0; i < 8; i++) rd(u16,i) = rs(u16,i) - rt(u16,i); break;
+  case PADDW: for (int i = 0; i < 4; i++) rd(u32,i) = rs(u32,i) + rt(u32,i); break;
+  case PSUBW: for (int i = 0; i < 4; i++) rd(u32,i) = rs(u32,i) - rt(u32,i); break;
+  case PADSBH: for (int i = 0; i < 8; i++) rd(s16,i) = rs(s16,i) + ((s16)rt(s8,i*2) - (s16)rt(s8,i*2+1)); break;
+  case PADDSB: for (int i = 0; i < 16; i++) { s16 temp = (s16)rs(s8,i) + (s16)rt(s8,i); rd(s8,i) = temp > 127 ? 127 : temp < -128 ? -128 : temp; } break;
+  case PSUBSB: for (int i = 0; i < 16; i++) { s16 temp = (s16)rs(s8,i) - (s16)rt(s8,i); rd(s8,i) = temp > 127 ? 127 : temp < -128 ? -128 : temp; } break;
+  case PADDSH: for (int i = 0; i < 8; i++) { s32 temp = (s32)rs(s16,i) + (s32)rt(s16,i); rd(s16,i) = temp > 32767 ? 32767 : temp < -32768 ? -32768 : temp; } break;
+  case PSUBSH: for (int i = 0; i < 8; i++) { s32 temp = (s32)rs(s16,i) - (s32)rt(s16,i); rd(s16,i) = temp > 32767 ? 32767 : temp < -32768 ? -32768 : temp; } break;
+  case PADDSW: for (int i = 0; i < 4; i++) { s64 temp = (s64)rs(s32,i) + (s64)rt(s32,i); rd(s32,i) = temp > 0x7FFFFFFF ? 0x7FFFFFFF : temp < (s64)0x80000000 ? (s64)0x80000000 : temp; } break;
+  case PSUBSW: for (int i = 0; i < 4; i++) { s64 temp = (s64)rs(s32,i) - (s64)rt(s32,i); rd(s32,i) = temp > 0x7FFFFFFF ? 0x7FFFFFFF : temp < (s64)0x80000000 ? (s64)0x80000000 : temp; } break;
+  case PADDUB: for (int i = 0; i < 16; i++) { u16 temp = (u16)rs(u8,i) + (u16)rt(u8,i); rd(u8,i) = temp > 255 ? 255 : temp; } break;
+  case PSUBUB: for (int i = 0; i < 16; i++) { s16 temp = (s16)rs(u8,i) - (s16)rt(u8,i); rd(u8,i) = temp < 0 ? 0 : temp > 255 ? 255 : temp; } break;
+  case PADDUH: for (int i = 0; i < 8; i++) { u32 temp = (u32)rs(u16,i) + (u32)rt(u16,i); rd(u16,i) = temp > 65535 ? 65535 : temp; } break;
+  case PSUBUH: for (int i = 0; i < 8; i++) { s32 temp = (s32)rs(u16,i) - (s32)rt(u16,i); rd(u16,i) = temp < 0 ? 0 : temp > 65535 ? 65535 : temp; } break;
+  case PADDUW: for (int i = 0; i < 4; i++) { u64 temp = (u64)rs(u32,i) + (u64)rt(u32,i); rd(u32,i) = temp > 0xFFFFFFFF ? 0xFFFFFFFF : temp; } break;
+  case PSUBUW: for (int i = 0; i < 4; i++) { s64 temp = (s64)rs(u32,i) - (s64)rt(u32,i); rd(u32,i) = temp < 0 ? 0 : temp > 0xFFFFFFFF ? 0xFFFFFFFF : temp; } break;
+  case PMULTW: for (int i = 0; i < 4; i++) { s64 temp = (s64)rs(s32,i) * (s64)rt(s32,i); rd(s32,i) = temp; } break;
+  case PMULTUW: for (int i = 0; i < 4; i++) { u64 temp = (u64)rs(u32,i) * (u64)rt(u32,i); rd(u32,i) = temp; } break;
+  case PDIVW: for (int i = 0; i < 4; i++) { rd(s32,i) = rt(s32,i) != 0 ? rs(s32,i) / rt(s32,i) : 0; } break;
+  case PDIVUW: for (int i = 0; i < 4; i++) { rd(u32,i) = rt(u32,i) != 0 ? rs(u32,i) / rt(u32,i) : 0; } break;
+  case PMADDW: for (int i = 0; i < 4; i++) { s64 temp = (s64)rs(s32,i) * (s64)rt(s32,i) + rd(s32,i); rd(s32,i) = temp; } break;
+  case PMADDUW: for (int i = 0; i < 4; i++) { u64 temp = (u64)rs(u32,i) * (u64)rt(u32,i) + rd(u32,i); rd(u32,i) = temp; } break;
+  case PMSUBW: for (int i = 0; i < 4; i++) { s64 temp = rd(s32,i) - ((s64)rs(s32,i) * (s64)rt(s32,i)); rd(s32,i) = temp; } break;
+  case PMFHI: rt(u64,0) = mips->hi.u64[0]; break;
+  case PMTHI: mips->hi.u64[0] = rs(u64,0); break;
+  case PMFLO: rt(u64,0) = mips->lo.u64[0]; break;
+  case PMTLO: mips->lo.u64[0] = rs(u64,0); break;
+  case PMULTH: for (int i = 0; i < 8; i++) { s32 temp = (s32)rs(s16,i) * (s32)rt(s16,i); rd(s16,i) = temp; } break;
+  case PMADDH: for (int i = 0; i < 8; i++) { s32 temp = (s32)rs(s16,i) * (s32)rt(s16,i) + rd(s16,i); rd(s16,i) = temp; } break;
+  case PMSUBH: for (int i = 0; i < 8; i++) { s32 temp = rd(s16,i) - ((s32)rs(s16,i) * (s32)rt(s16,i)); rd(s16,i) = temp; } break;
   case PMFHL: break;
   case PMTHL: break;
-  case PHMADH: break;
-  case PHMSBH: break;
-  case PDIVBW: break;
+  case PHMADH: for (int i = 0; i < 4; i++) { s32 temp = ((s32)rs(s16,i*2) * (s32)rt(s16,i*2)) + ((s32)rs(s16,i*2+1) * (s32)rt(s16,i*2+1)); rd(s32,i) = temp; } break;
+  case PHMSBH: for (int i = 0; i < 4; i++) { s32 temp = ((s32)rs(s16,i*2) * (s32)rt(s16,i*2)) - ((s32)rs(s16,i*2+1) * (s32)rt(s16,i*2+1)); rd(s32,i) = temp; } break;
+  case PDIVBW: for (int i = 0; i < 4; i++) { rd(s32,i) = (rs(s16,i*2) << 16) | ((rt(s16,i) != 0) ? ((s32)rs(s16,i*2+1) / rt(s16,i)) : 0); } break;
   case MFSA: break;
   case MTSA: break;
   case MTSAB: break;
   case MTSAH: break;
-  case PSLLH: break;
-  case PSRLH: break;
-  case PSRAH: break;
-  case PSLLW: break;
-  case PSLLVW: break;
-  case PSRLW: break;
-  case PSRLVW: break;
-  case PSRAW: break;
-  case PSRAVW: break;
+  case PSLLH: for (int i = 0; i < 8; i++) rd(u16,i) = rt(u16,i) << decoded.sa; break;
+  case PSRLH: for (int i = 0; i < 8; i++) rd(u16,i) = rt(u16,i) >> decoded.sa; break;
+  case PSRAH: for (int i = 0; i < 8; i++) rd(s16,i) = rt(s16,i) >> decoded.sa; break;
+  case PSLLW: for (int i = 0; i < 4; i++) rd(u32,i) = rt(u32,i) << decoded.sa; break;
+  case PSLLVW: for (int i = 0; i < 4; i++) rd(u32,i) = rt(u32,i) << (rs(u32,i) & 31); break;
+  case PSRLW: for (int i = 0; i < 4; i++) rd(u32,i) = rt(u32,i) >> decoded.sa; break;
+  case PSRLVW: for (int i = 0; i < 4; i++) rd(u32,i) = rt(u32,i) >> (rs(u32,i) & 31); break;
+  case PSRAW: for (int i = 0; i < 4; i++) rd(s32,i) = rt(s32,i) >> decoded.sa; break;
+  case PSRAVW: for (int i = 0; i < 4; i++) rd(s32,i) = rt(s32,i) >> (rs(u32,i) & 31); break;
   case QFSRV: break;
-  case PABSH: break;
-  case PABSW: break;
-  case PMAXH: break;
-  case PMINH: break;
-  case PMAXW: break;
-  case PMINW: break;
-  case PAND: break;
-  case POR: break;
-  case PNOR: break;
-  case PXOR: break;
-  case PCGTB: break;
-  case PCEQB: break;
-  case PCGTH: break;
-  case PCEQH: break;
-  case PCGTW: break;
-  case PCEQW: break;
-  case PLZCW: break;
-  case LQ: break;
-  case SQ: break;
-  case PPACB: break;
-  case PPACH: break;
-  case PINTEH: break;
-  case PPACW: break;
-  case PEXTUB: break;
-  case PEXTLB: break;
-  case PEXTUH: break;
-  case PEXTLH: break;
-  case PEXTUW: break;
-  case PEXTLW: break;
-  case PEXT5: break;
-  case PPAC5: break;
-  case PCPYH: break;
-  case PCPYLD: break;
-  case PCPYUD: break;
-  case PREVH: break;
-  case PINTH: break;
-  case PEXEH: break;
-  case PEXCH: break;
-  case PEXEW: break;
-  case PEXCW: break;
-  case PROT3W: break;
+  case PABSH: for (int i = 0; i < 8; i++) rd(s16,i) = rt(s16,i) < 0 ? -rt(s16,i) : rt(s16,i); break;
+  case PABSW: for (int i = 0; i < 4; i++) rd(s32,i) = rt(s32,i) < 0 ? -rt(s32,i) : rt(s32,i); break;
+  case PMAXH: for (int i = 0; i < 8; i++) rd(s16,i) = rs(s16,i) > rt(s16,i) ? rs(s16,i) : rt(s16,i); break;
+  case PMINH: for (int i = 0; i < 8; i++) rd(s16,i) = rs(s16,i) < rt(s16,i) ? rs(s16,i) : rt(s16,i); break;
+  case PMAXW: for (int i = 0; i < 4; i++) rd(s32,i) = rs(s32,i) > rt(s32,i) ? rs(s32,i) : rt(s32,i); break;
+  case PMINW: for (int i = 0; i < 4; i++) rd(s32,i) = rs(s32,i) < rt(s32,i) ? rs(s32,i) : rt(s32,i); break;
+  case PAND: rd(u128,0) = rs(u128,0) & rt(u128,0); break;
+  case POR: rd(u128,0) = rs(u128,0) | rt(u128,0); break;
+  case PNOR: rd(u128,0) = ~(rs(u128,0) | rt(u128,0)); break;
+  case PXOR: rd(u128,0) = rs(u128,0) ^ rt(u128,0); break;
+  case PCGTB: for (int i = 0; i < 16; i++) rd(u8,i) = (rs(s8,i) > rt(s8,i)) ? 0xFF : 0; break;
+  case PCEQB: for (int i = 0; i < 16; i++) rd(u8,i) = (rs(u8,i) == rt(u8,i)) ? 0xFF : 0; break;
+  case PCGTH: for (int i = 0; i < 8; i++) rd(u16,i) = (rs(s16,i) > rt(s16,i)) ? 0xFFFF : 0; break;
+  case PCEQH: for (int i = 0; i < 8; i++) rd(u16,i) = (rs(u16,i) == rt(u16,i)) ? 0xFFFF : 0; break;
+  case PCGTW: for (int i = 0; i < 4; i++) rd(u32,i) = (rs(s32,i) > rt(s32,i)) ? 0xFFFFFFFF : 0; break;
+  case PCEQW: for (int i = 0; i < 4; i++) rd(u32,i) = (rs(u32,i) == rt(u32,i)) ? 0xFFFFFFFF : 0; break;
+  case PLZCW: for (int i = 0; i < 4; i++) rd(u32,i) = __builtin_clz(rt(u32,i)); break;
+  case LQ: if (mips_read(ps2, mips, base(u32,0) + simm & ~0xf, &tempu128)) rt(u128,0) = tempu128; break;
+  case SQ: mips_write(ps2, mips, base(u32,0) + simm & ~0xf, rt(u128,0)); break;
+  case PPACB: for (int i = 0; i < 16; i++) rd(u8,i) = i & 1 ? rt(u8,i/2) : rs(u8,i/2); break;
+  case PPACH: for (int i = 0; i < 8; i++) rd(u16,i) = i & 1 ? rt(u16,i/2) : rs(u16,i/2); break;
+  case PINTEH: for (int i = 0; i < 8; i++) rd(u16,i) = i & 1 ? rt(u16,i/2) : rs(u16,i/2); break;
+  case PPACW: for (int i = 0; i < 4; i++) rd(u32,i) = i & 1 ? rt(u32,i/2) : rs(u32,i/2); break;
+  case PEXTUB: for (int i = 0; i < 8; i++) rd(u16,i) = (i & 1) ? rt(u8,i+8) : rs(u8,i+8); break;
+  case PEXTLB: for (int i = 0; i < 8; i++) rd(u16,i) = (i & 1) ? rt(u8,i) : rs(u8,i); break;
+  case PEXTUH: for (int i = 0; i < 4; i++) rd(u32,i) = (i & 1) ? rt(u16,i+4) : rs(u16,i+4); break;
+  case PEXTLH: for (int i = 0; i < 4; i++) rd(u32,i) = (i & 1) ? rt(u16,i) : rs(u16,i); break;
+  case PEXTUW: for (int i = 0; i < 2; i++) rd(u64,i) = (i & 1) ? rt(u32,i+2) : rs(u32,i+2); break;
+  case PEXTLW: for (int i = 0; i < 2; i++) rd(u64,i) = (i & 1) ? rt(u32,i) : rs(u32,i); break;
+  case PEXT5: for (int i = 0; i < 4; i++) rd(u32,i) = ((rs(u32,i) >> 3) & 0x1F) | ((rt(u32,i) << 5) & 0x3E0); break;
+  case PPAC5: for (int i = 0; i < 4; i++) rd(u32,i) = ((rs(u32,i) & 0x1F) << 3) | ((rt(u32,i) & 0x3E0) >> 5); break;
+  case PCPYH: for (int i = 0; i < 8; i++) rd(u16,i) = rt(u16,(i & 3) * 2); break;
+  case PCPYLD: rd(u64,0) = rs(u64,0); rd(u64,1) = rt(u64,0); break;
+  case PCPYUD: rd(u64,0) = rs(u64,1); rd(u64,1) = rt(u64,1); break;
+  case PREVH: for (int i = 0; i < 8; i++) rd(u16,i) = rt(u16,7-i); break;
+  case PINTH: for (int i = 0; i < 4; i++) { rd(u16,i*2) = rs(u16,i); rd(u16,i*2+1) = rt(u16,i); } break;
+  case PEXEH: for (int i = 0; i < 4; i++) { rd(u16,i*2) = rt(u16,i*2+1); rd(u16,i*2+1) = rt(u16,i*2); } break;
+  case PEXCH: for (int i = 0; i < 4; i++) { rd(u16,i*2) = rt(u16,(i^2)*2); rd(u16,i*2+1) = rt(u16,(i^2)*2+1); } break;
+  case PEXEW: for (int i = 0; i < 2; i++) { rd(u32,i*2) = rt(u32,i*2+1); rd(u32,i*2+1) = rt(u32,i*2); } break;
+  case PEXCW: for (int i = 0; i < 2; i++) { rd(u32,i*2) = rt(u32,(i^1)*2); rd(u32,i*2+1) = rt(u32,(i^1)*2+1); } break;
+  case PROT3W: rd(u32,0) = rt(u32,1); rd(u32,1) = rt(u32,2); rd(u32,2) = rt(u32,0); rd(u32,3) = rt(u32,3); break;
   case BC0F: break;
   case BC0FL: break;
   case BC0T: break;
@@ -673,8 +678,10 @@ void mips_execute(ps2* ps2, mips* mips, instruction instruction) {
   case RSQRT_S: break;
   case MAX_S: break;
   case MIN_S: break;
-  case C_LS_S: break;
-  //TODO: and the like
+  case C_LT_S: break;
+  case C_EQ_S: break;
+  case C_F_S: break;
+  case C_LE_S: break;
   case BC1T: break;
   case BC1F: break;
   case BC1TL: break;

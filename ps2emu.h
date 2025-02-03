@@ -59,6 +59,7 @@ typedef union gpr {
 
 
 typedef struct mips {
+  gpr hi,lo;
     union {
         gpr gpr[32];
         struct {
@@ -69,9 +70,7 @@ typedef struct mips {
         };
     };
     bool is_r5900;
-
-    u32 (*mem_read)(struct mips*, u32 addr);
-    void (*mem_write)(struct mips*, u32 addr, u32 data);
+  u32 pc, nextpc;
 } mips;
 
 typedef struct ps2 {
@@ -124,19 +123,23 @@ typedef enum mips_instr_e {
   // fpu compute
   ADD_S, SUB_S, MUL_S, DIV_S, ABS_S, NEG_S, SQRT_S, ADDA_S, SUBA_S, MULA_S, MADD_S, MADDA_S, MSUB_S, MSUBA_S, RSQRT_S, MAX_S, MIN_S,
   // fpu compare
-  C_LS_S, //TODO: and the like
+  C_LT_S, C_EQ_S, C_F_S, C_LE_S,
   //fpu branch
   BC1T, BC1F, BC1TL, BC1FL,
   //cop2
   BC2F, BC2FL, BC2T, BC2TL, CALLMS, CALLMSR, CFC2, CTC2, LQC2, SQC2, QMFC2, QMTC2, WAITQ,
-
-
 
 } mips_instr_e;
 
 typedef enum inst_type_e {
   R_TYPE, J_TYPE, I_TYPE
 } inst_type_e;
+
+typedef enum disasm_type_e {
+  DISASM_NONE, DISASM_RD_RS_RT, DISASM_RT_RS_IMM, DISASM_RS_RT_OFFSET, DISASM_RS_OFFSET, DISASM_RS_RT,
+  DISASM_RD_RT_SA, DISASM_RD_RT_RS, DISASM_TARGET, DISASM_RS, DISASM_RD_RS, DISASM_RT_OFFSET_BASE,
+  DISASM_RT_IMM, DISASM_RD, DISASM_RS_IMM, DISASM_OFFSET, DISASM_RT_RD, DISASM_RT
+};
 
 typedef union inst_op {
   u32 raw;
