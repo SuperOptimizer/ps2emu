@@ -71,6 +71,10 @@ typedef struct mips {
     };
     bool is_r5900;
   u32 pc, nextpc;
+  u8 ee_main_ram[32 * 1024 * 1024];  // 32MB main RAM
+  u8 ee_scratch_pad[16 * 1024];       // 16KB scratchpad RAM
+  u8 iop_ram[2 * 1024 * 1024];        // 2MB IOP RAM
+  u8 bios[4 * 1024 * 1024];           // 4MB BIOS
 } mips;
 
 typedef struct ps2 {
